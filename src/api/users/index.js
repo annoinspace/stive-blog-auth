@@ -3,6 +3,8 @@ import createHttpError from "http-errors"
 import UsersModel from "./model.js"
 import LikedModel from "./likedModel.js"
 import BlogsModel from "../blogs/model.js"
+import { adminOnlyMiddleware } from "../../lib/auth/adminOnly.js"
+import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js"
 const usersRouter = express.Router()
 
 usersRouter.post("/", async (req, res, next) => {
@@ -21,7 +23,7 @@ usersRouter.post("/", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/", async (req, res, next) => {
+usersRouter.get("/", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const users = await UsersModel.find()
     res.send(users)
@@ -30,7 +32,7 @@ usersRouter.get("/", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/:userId", async (req, res, next) => {
+usersRouter.get("/:userId", basicAuthMiddleware, async (req, res, next) => {
   try {
     const user = await UsersModel.findById(req.params.userId)
     if (user) {
@@ -43,7 +45,7 @@ usersRouter.get("/:userId", async (req, res, next) => {
   }
 })
 
-usersRouter.put("/:userId", async (req, res, next) => {
+usersRouter.put("/:userId", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const updatedUser = await UsersModel.findByIdAndUpdate(
       req.params.userId, // WHO you want to modify
@@ -62,7 +64,7 @@ usersRouter.put("/:userId", async (req, res, next) => {
   }
 })
 
-usersRouter.delete("/:userId", async (req, res, next) => {
+usersRouter.delete("/:userId", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const deletedUser = await UsersModel.findByIdAndDelete(req.params.userId)
     if (deletedUser) {
