@@ -4,7 +4,13 @@ import authorsRouter from "./api/authors/index.js"
 import cors from "cors"
 import blogsRouter from "./api/blogs/index.js"
 import commentsRouter from "./api/comments/index.js"
-import { badRequestHandler, notFoundHandler, genericErrorHandler } from "./errorHandlers.js"
+import {
+  badRequestHandler,
+  notFoundHandler,
+  genericErrorHandler,
+  unauthorizedErrorHandler,
+  forbiddenErrorHandler
+} from "./errorHandlers.js"
 
 import mongoose from "mongoose"
 import usersRouter from "./api/users/index.js"
@@ -38,6 +44,8 @@ server.use("/users", usersRouter)
 
 // ****************** ERROR HANDLERS ****************
 server.use(badRequestHandler) // 400
+server.use(unauthorizedErrorHandler)
+server.use(forbiddenErrorHandler)
 server.use(notFoundHandler) // 404
 server.use(genericErrorHandler) // 500
 // (the order of these error handlers does not really matters, expect for genericErrorHandler which needs to be the last in chain)
