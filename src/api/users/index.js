@@ -7,7 +7,7 @@ import { createAccessToken } from "../../lib/auth/tools.js"
 import { jwtAuthMiddleware } from "../../lib/auth/jwtAuth.js"
 const usersRouter = express.Router()
 
-usersRouter.post("/", async (req, res, next) => {
+usersRouter.post("/register", async (req, res, next) => {
   try {
     // make sure an email is not aready in use
     const existingUser = await UsersModel.findOne({ email: req.body.email })
