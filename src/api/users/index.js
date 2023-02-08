@@ -1,10 +1,10 @@
 import express from "express"
 import createHttpError from "http-errors"
 import UsersModel from "./model.js"
-import LikedModel from "./likedModel.js"
 import BlogsModel from "../blogs/model.js"
 import { adminOnlyMiddleware } from "../../lib/auth/adminOnly.js"
-import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js"
+import { createAccessToken } from "../../lib/auth/tools.js"
+import { jwtAuthMiddleware } from "../../lib/auth/jwtAuth.js"
 const usersRouter = express.Router()
 
 usersRouter.post("/", async (req, res, next) => {
@@ -23,7 +23,7 @@ usersRouter.post("/", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.get("/", jwtAuthMiddleware, async (req, res, next) => {
   try {
     const users = await UsersModel.find()
     res.send(users)
@@ -32,7 +32,16 @@ usersRouter.get("/", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, 
   }
 })
 
-usersRouter.get("/:userId", basicAuthMiddleware, async (req, res, next) => {
+usersRouter.get("/me", jwtAuthMiddleware, async (req, res, next) => {
+  try {
+    const user = await UsersModel.findById(req.user._id)
+    res.send(user)
+  } catch (error) {
+    next(error)
+  }
+})
+
+usersRouter.get("/:userId", jwtAuthMiddleware, async (req, res, next) => {
   try {
     const user = await UsersModel.findById(req.params.userId)
     if (user) {
@@ -45,7 +54,7 @@ usersRouter.get("/:userId", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 
-usersRouter.put("/:userId", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.put("/:userId", jwtAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const updatedUser = await UsersModel.findByIdAndUpdate(
       req.params.userId, // WHO you want to modify
@@ -64,13 +73,29 @@ usersRouter.put("/:userId", basicAuthMiddleware, adminOnlyMiddleware, async (req
   }
 })
 
-usersRouter.delete("/:userId", basicAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.delete("/:userId", jwtAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const deletedUser = await UsersModel.findByIdAndDelete(req.params.userId)
     if (deletedUser) {
       res.status(204).send()
     } else {
       next(createHttpError(404, `User with id ${req.params.userId} not found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+usersRouter.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body
+    const user = UsersModel.checkCredentials(email, password)
+    if (user) {
+      const payload = { _id: user._id, role: user.role }
+      const accessToken = await createAccessToken(payload)
+      res.send({ accessToken })
+    } else {
+      next(createHttpError(401, "Credentials are not OK!"))
     }
   } catch (error) {
     next(error)
