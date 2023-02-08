@@ -23,7 +23,7 @@ usersRouter.post("/", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/", jwtAuthMiddleware, async (req, res, next) => {
+usersRouter.get("/", jwtAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const users = await UsersModel.find()
     res.send(users)
