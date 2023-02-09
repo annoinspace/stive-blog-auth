@@ -2,6 +2,7 @@ import express from "express"
 import listEndpoints from "express-list-endpoints"
 import authorsRouter from "./api/authors/index.js"
 import cors from "cors"
+import passport from "passport"
 import blogsRouter from "./api/blogs/index.js"
 import commentsRouter from "./api/comments/index.js"
 import {
@@ -14,10 +15,13 @@ import {
 
 import mongoose from "mongoose"
 import usersRouter from "./api/users/index.js"
+import googleStrategy from "./lib/auth/google.js"
 
 const server = express()
 
-const port = process.env.PORT
+const port = process.env.PORT || 3001
+
+passport.use("google", googleStrategy)
 
 // ---------------- WHITELIST FOR CORS ------------------
 
@@ -36,6 +40,7 @@ const corsOptions = {
 
 server.use(express.json())
 server.use(cors(corsOptions))
+server.use(passport.initialize())
 // ****************** ENDPOINTS ********************
 server.use("/blogPosts", blogsRouter)
 server.use("/comments", commentsRouter)

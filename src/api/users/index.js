@@ -1,5 +1,6 @@
 import express from "express"
 import createHttpError from "http-errors"
+import passport from "passport"
 import UsersModel from "./model.js"
 import BlogsModel from "../blogs/model.js"
 import { adminOnlyMiddleware } from "../../lib/auth/adminOnly.js"
@@ -23,13 +24,20 @@ usersRouter.post("/register", async (req, res, next) => {
   }
 })
 
-usersRouter.get("/", jwtAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+usersRouter.get("/", jwtAuthMiddleware, async (req, res, next) => {
   try {
-    const users = await UsersModel.find()
+    const users = await UsersModel.find({})
     res.send(users)
   } catch (error) {
     next(error)
   }
+})
+
+usersRouter.get("/googleLogin", passport.authenticate("google", { scope: ["profile", "email"] }))
+
+usersRouter.get("/googleRedirect", passport.authenticate("google", { session: false }), async (req, res, next) => {
+  console.log(req.user)
+  res.redirect(`${process.env.FE_URL}?accessToken=${req.user.accessToken}`)
 })
 
 usersRouter.get("/me", jwtAuthMiddleware, async (req, res, next) => {
